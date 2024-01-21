@@ -7,6 +7,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/skennone/goAuth/internal/data"
 )
 
 type config struct {
@@ -17,6 +18,10 @@ type config struct {
 		maxIdleConns int
 		maxIdleTime  string
 	}
+}
+type application struct {
+	config config
+	models data.Models
 }
 
 func main() {
@@ -33,7 +38,12 @@ func main() {
 		panic("Could not connect to DB")
 	}
 	defer db.Close()
-	routes()
+
+	app := &application{
+		config: cfg,
+		models: data.NewModels(db),
+	}
+	app.routes()
 }
 func openDB(cfg config) (*sql.DB, error) {
 	db, err := sql.Open("postgres", cfg.db.dsn)
