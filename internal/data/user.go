@@ -32,7 +32,13 @@ func (p *password) Set(plaintextPassword string) error {
 	p.hash = hash
 	return nil
 }
-
+func (p *password) Matches(plaintextPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(p.hash, []byte(plaintextPassword))
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 func (m UserModel) Insert(user *User) error {
 	query := `
 		Insert into users (email,password_hash)
@@ -47,6 +53,28 @@ func (m UserModel) Insert(user *User) error {
 		return err
 	}
 	return nil
+}
+
+func (m UserModel) GetByEmail(email string) (*User, error) {
+	query := `
+ 		Select id, created_at,email,password_hash
+		from users
+		where email = $1`
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, email).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.Email,
+		&user.Password.hash,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 func ValidateEmail(v *validator.Validator, email string) {
 	v.Check(email != "", "email", "must be provided")
