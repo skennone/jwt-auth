@@ -21,6 +21,7 @@ func (app *application) routes() {
 
 	router.POST("/api/register", app.Register)
 	router.POST("/api/login", app.Login)
+	router.GET("/api/validate", app.RequireAuthenticate, app.Validate)
 	router.Run(":8080")
 }
 
@@ -109,4 +110,13 @@ func (app *application) Login(c *gin.Context) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
 	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (app *application) Validate(c *gin.Context) {
+	user, _ := c.Get("user")
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Im logged in",
+		"user":    user,
+	})
 }

@@ -82,6 +82,25 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 	}
 	return &user, nil
 }
+func (m UserModel) GetByID(ID any) (*User, error) {
+	query := `
+			Select id,created_at,email,password_hash
+			from users
+			where id = $1`
+	var user User
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	err := m.DB.QueryRowContext(ctx, query, ID).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.Email,
+		&user.Password.hash,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
 func ValidateEmail(v *validator.Validator, email string) {
 	v.Check(email != "", "email", "must be provided")
 	v.Check(validator.Matches(email, validator.EmailRX), "email", "must be a valid email address")
